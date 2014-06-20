@@ -80,16 +80,17 @@ let rec move d grid = match d with
   | Down -> transpose (move Right (transpose grid))
 ;;
 
-let num_zeroes grid = 
-  let rec aux count = function
-    | [] -> count
-    | (h::t) -> aux (count + (fold_left (fun acc x -> if x == 0 then (acc+1) else acc) 0 h)) t
-  in aux 0 grid
+(* change element n to x in lst *)
+let change_nth n x lst =
+  let rec aux ns acc = function
+    | [] -> acc 
+    | (h::t) -> if (ns==0) then aux (ns-1) (x::acc) t else aux (ns-1) (h::acc) t 
+  in rev (aux n [] lst)
 ;;
 
-(* -- *)
-(* IO *)
-(* -- *)
+(* --------------- *)
+(* I/O and helpers *)
+(* --------------- *)
 
 let row_to_string row = 
   let rec aux = function 
@@ -120,15 +121,7 @@ let string_to_dir = function
 (* Game Flow Functions *)
 (* ------------------- *)
 
-(* change element n to x in lst *)
-let change_nth n x lst =
-  let rec aux ns acc = function
-    | [] -> acc 
-    | (h::t) -> if (ns==0) then aux (ns-1) (x::acc) t else aux (ns-1) (h::acc) t 
-  in rev (aux n [] lst)
-;;
-
-(* choose a random row and column, n is height/width of grid *)
+(* return the grid with one empty space changed to a 2 *)
 let new_tile grid = 
   let (rand_row,rand_pos) = (int 4, int 4) in 
   let row = nth grid rand_row in 
@@ -136,6 +129,14 @@ let new_tile grid =
   change_nth rand_row new_row grid
 ;;
 
+(* if one of the tiles is 2048, then the player has won the game *)
+let won grid = 
+  mem true (map (mem 2048) grid)
+;; 
+
+let lost grid = 
+  not (mem true (map (fun dir -> (grid <> (move dir grid))) [Left;Right;Up;Down]))
+;;
 
 (* --------- *)
 (* Game Loop *)
@@ -145,12 +146,18 @@ let start_grid = [[0;0;0;0];
                   [0;0;0;2];
                   [0;0;0;0]];;
 
-let rec run grid = 
+let rec run grid =
   print_grid grid;
-  let line = input_line stdin in
-  let dir = string_to_dir line in
-  let new_grid = move dir grid in
-  run (new_tile new_grid)
+  if lost grid then
+    print_endline "Game over!"
+  else if won grid then
+    print_endline "You won!"
+  else begin 
+    let line = input_line stdin in
+    let dir = string_to_dir line in
+    let new_grid = move dir grid in
+    run (new_tile new_grid)
+  end
 ;;
 
 run start_grid;;
