@@ -76,14 +76,49 @@ let rec move d grid = match d with
   | Down -> transpose (move Right (transpose grid))
 ;;
 
-(* ------------------- *)
-(* Game flow functions *)
-(* ------------------- *)
+(* -- *)
+(* IO *)
+(* -- *)
 
-(* TODO *)
+let row_to_string row = 
+  let rec aux = function 
+    | [] -> ""
+    | [h] -> string_of_int h
+    | (h::t) -> string_of_int h ^ " " ^ aux t
+  in "[" ^ aux row ^ "]"
+;;
+
+let rec grid_to_string = function
+    | [] -> ""
+    | [h] -> row_to_string h
+    | (h::t) -> row_to_string h ^ "\n" ^ grid_to_string t
+;;
+
+let print_grid grid = print_endline (grid_to_string grid)
+;;
+
+let string_to_dir = function
+  | "a" -> Left
+  | "d" -> Right
+  | "s" -> Down
+  | "w" -> Up
+  | _ -> Left (* default to left if input malformed *)
+;;
 
 (* --------- *)
 (* Game Loop *)
 (* --------- *)
+let start_grid = [[0;0;0;0];
+             [0;0;0;2];
+             [0;0;0;2];
+             [0;0;0;0]];;
 
-(* TODO *)
+let rec run grid = 
+  print_grid grid;
+  let line = input_line stdin in
+  let dir = string_to_dir line in
+  let new_grid = move dir grid in
+  run new_grid
+;;
+
+run start_grid;;
