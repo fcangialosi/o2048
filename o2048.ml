@@ -8,6 +8,10 @@
 *)
 
 open List;;
+open Random;;
+
+(* initialize random number generator*)
+self_init () ;;
 
 (* Data type specifying direction of grid movement*)
 type direction = Left | Right | Up | Down;;
@@ -60,7 +64,7 @@ let rec transpose grid =
 ;;
 
 (* ------------------------- *)
-(* Grid manipulation helpers *)
+(* Grid  helpers *)
 (* ------------------------- *)
 
 (* Shifts a single row to the left *)
@@ -74,6 +78,13 @@ let rec move d grid = match d with
   | Right -> map rev (map shift (map rev grid))
   | Up -> transpose (move Left (transpose grid))
   | Down -> transpose (move Right (transpose grid))
+;;
+
+let num_zeroes grid = 
+  let rec aux count = function
+    | [] -> count
+    | (h::t) -> aux (count + (fold_left (fun acc x -> if x == 0 then (acc+1) else acc) 0 h)) t
+  in aux 0 grid
 ;;
 
 (* -- *)
@@ -105,20 +116,41 @@ let string_to_dir = function
   | _ -> Left (* default to left if input malformed *)
 ;;
 
+(* ------------------- *)
+(* Game Flow Functions *)
+(* ------------------- *)
+
+(* change element n to x in lst *)
+let change_nth n x lst =
+  let rec aux ns acc = function
+    | [] -> acc 
+    | (h::t) -> if (ns==0) then aux (ns-1) (x::acc) t else aux (ns-1) (h::acc) t 
+  in rev (aux n [] lst)
+;;
+
+(* choose a random row and column, n is height/width of grid *)
+let new_tile grid = 
+  let (rand_row,rand_pos) = (int 4, int 4) in 
+  let row = nth grid rand_row in 
+  let new_row = change_nth rand_pos 2 row in
+  change_nth rand_row new_row grid
+;;
+
+
 (* --------- *)
 (* Game Loop *)
 (* --------- *)
 let start_grid = [[0;0;0;0];
-             [0;0;0;2];
-             [0;0;0;2];
-             [0;0;0;0]];;
+                  [0;0;0;2];
+                  [0;0;0;2];
+                  [0;0;0;0]];;
 
 let rec run grid = 
   print_grid grid;
   let line = input_line stdin in
   let dir = string_to_dir line in
   let new_grid = move dir grid in
-  run new_grid
+  run (new_tile new_grid)
 ;;
 
 run start_grid;;
